@@ -10,16 +10,23 @@ class Operations:
         self.container_num = 0
         self.tar_name = None
         self.mount_points = None
+        self.path = "base_images/basefs"
 
-    def mount_item(self, item, path, access, dir_path):
+    def mount_item(self, item, path, access, dir_name):
         path_list = path.split('/')
         path_list.pop(0)
 
+        path = self.path
         for directory in path_list:
-            if not os.path.isdir(dir_path + '/' + directory):
-                os.mkdir(dir_path + '/' + directory)
+            path += ('/' + directory)
+            if not os.path.isdir(path):
+               os.mkdir(path)
 
-    def launch_instance(self, file_name):
+        command = "mount --bind -o ro " + path + " " + dir_name
+        os.system("command")
+
+
+    def launch_instance(self, file_name):																																																										
         self.container_num += 1
         dir_name = 'containers/container' + str(self.container_num)
         os.mkdir(dir_name)
@@ -39,14 +46,21 @@ class Operations:
         # tar_file.close()
 
         # Parse the required mount points
-        # for mount in self.mount_points:
-        #     mount_list = mount.split('')
-        #     mount_item = mount_list[0]
-        #     mount_path = mount_list[1]
-        #     mount_access = mount_list[2]
-        #     self.mount_item(self, mount_item, mount_path, mount_access, dir_path)
+        for mount in self.mount_points:
+            mount_list = mount.split(' ')
+            mount_item = mount_list[0]
+            mount_path = mount_list[1]
+            mount_access = mount_list[2]
+            self.mount_item(mount_item, mount_path, mount_access, dir_name)
 
-        return dir_name
+        return dir_name.replace("/", "-")
+
+    def destroy_instance(self, dir_name):
+        self.container_num -= 1
+        dir_name = dir_name.replace("-", "/")
+        command = "umount " + dir_name
+        os.system("command")
+        os.rmdir(dir_name)
 
 
 def launch_instance(name):

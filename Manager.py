@@ -114,17 +114,34 @@ def list_instances():
         return response
 
 
+@manager.route('/destroy/<instance_name>', methods=['DELETE'])
+def destroy_instance(instance_name):
+
+    # print(const.instance_info["instances"])
+    # print(instance_name)
+    # print("")
+    for dic in const.instance_info['instances']:
+        if dic["instance"] == instance_name:
+            const.instance_info['instances'].remove(dic)
+            const.operation.destroy_instance(instance_name)
+            response = make_response(None, 200)
+            return response
+
+    response = make_response(None, 404)
+    return response
 
 
+@manager.route('/destroyall', methods = ['DELETE'])
+def destroyall():
 
+    for dic in const.instance_info['instances']:
+        instance_name = dic["instance"]
+        const.operation.destroy_instance(instance_name)
 
+    const.instance_info['instances'] = []
 
-
-
-
-
-
-
+    response = make_response(None, 200)
+    return response
 
 
 
