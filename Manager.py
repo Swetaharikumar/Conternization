@@ -4,6 +4,9 @@ import Consts as const
 from flask import Flask, request, jsonify
 import json
 import os.path
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 
 manager = Flask(__name__)  # Creating the flask web server
@@ -123,7 +126,11 @@ def destroy_instance(instance_name):
     for dic in const.instance_info['instances']:
         if dic["instance"] == instance_name:
             const.instance_info['instances'].remove(dic)
-            const.operation.destroy_instance(instance_name)
+            dir_name_part1 = dic['name']
+            dir_name_part2 = dic['major']
+            dir_name_part3 = dic['minor']
+            dir_name = dir_name_part1 + '-' + dir_name_part2 + '-' + dir_name_part3
+            const.operation.destroy_instance(dir_name)
             response = make_response(None, 200)
             return response
 
@@ -135,8 +142,11 @@ def destroy_instance(instance_name):
 def destroyall():
 
     for dic in const.instance_info['instances']:
-        instance_name = dic["instance"]
-        const.operation.destroy_instance(instance_name)
+        dir_name_part1 = dic['name']
+        dir_name_part2 = dic['major']
+        dir_name_part3 = dic['minor']
+        dir_name = dir_name_part1 + '-' + dir_name_part2 + '-' + dir_name_part3
+        const.operation.destroy_instance(dir_name)
 
     const.instance_info['instances'] = []
 
