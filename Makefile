@@ -10,6 +10,7 @@ manager:
 	python Manager.py
 
 clean:
+	sudo /bin/bash ./clean.sh
 	sudo rm -rf configfiles/
 	sudo rm -rf containers/
 	# sudo rm -rf launched_images/

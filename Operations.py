@@ -3,7 +3,7 @@ import tarfile
 import json
 import shutil
 import threading
-
+import time
 
 class Operations:
     def __init__(self):
@@ -53,11 +53,29 @@ class Operations:
     def chroot(self, dir_name):
         startup_env = self.config_data["startup_env"]
         port = startup_env.split("=")[1].split(";")[0]
-        command = 'sudo PORT=' + port + ' chroot launched_images/' + dir_name +'/basefs webserver/tiny.sh'
-        kill_command = 'sudo chroot launched_images/' + dir_name +'/basefs webserver/cgi-bin/pkill.sh'
+        base_path = 'launched_images/' + dir_name + '/basefs'
+        command = 'sudo mount -t proc proc ' + base_path + '/proc'
+        # print(command)
+        os.system(command)
+
+        # command = "sudo unshare -p -f --mount-proc=" + base_path + "/proc \\"
+        # # print(command)
+        # os.system(command)
+
+        commands = []
+        command = "sudo unshare -p -f --mount-proc=" + base_path + "/proc chroot " + base_path + ' /bin/bash -c "PORT=' + port + ' webserver/tiny.sh"'
+        # print(command)
+        # os.system(command)
+        # commands.append(command)
+        #
+        # command = 'sudo PORT=' + port + ' webserver/tiny.sh'
+        # commands.append(command)
+        # print(command)
+        kill_command = 'sudo chroot ' + base_path + ' webserver/cgi-bin/pkill.sh'
         self.kills[dir_name] = kill_command
         try:
             x = threading.Thread(target=run_server, args=(command,))
+            # x.daemon = True
             x.start()
         except KeyboardInterrupt:
             pass
@@ -87,7 +105,6 @@ class Operations:
             os.makedirs(img_path)
             tar_path = 'base_images/basefs.tar.gz'
             tar_file = tarfile.open(tar_path)
-            print(img_path)
             tar_file.extractall(img_path)
             tar_file.close()
 
@@ -106,10 +123,15 @@ class Operations:
     def destroy_instance(self, dir_name):
         file_name = dir_name + '.cfg'
         # self.container_num -= 1
-        kill_command = self.kills[dir_name]
-        print(kill_command)
-        os.system(kill_command)
-        del self.kills[dir_name]
+        # kill_command = self.kills[dir_name]
+        # print(kill_command)
+        # os.system(kill_command)
+        # del self.kills[dir_name]
+
+        base_path = 'launched_images/' + dir_name + '/basefs'
+        command = "sudo umount " + base_path + '/proc'
+        os.system(command)
+
         for umount_command in reversed(self.mounts[dir_name]):
             os.system(umount_command)
         del self.mounts[dir_name]
@@ -117,4 +139,5 @@ class Operations:
         shutil.rmtree('containers/' + dir_name)
 
 def run_server(command):
+    print(command)
     os.system(command)
