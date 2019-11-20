@@ -53,9 +53,8 @@ class Operations:
         self.mounts[dir_name].append(umount_command)
 
     def chroot(self, dir_name):
-        # get port number
-        startup_env = self.config_data["startup_env"]
-        port = startup_env.split("=")[1].split(";")[0]
+        # get startup command
+        env_command = self.config_data["startup_env"].replace(";", " ")
 
         # mount proc
         base_path = 'launched_images/' + dir_name + '/basefs'
@@ -64,8 +63,8 @@ class Operations:
 
         # start the server
         # first command can pass test3, while the second one can pass test4
-        command = 'sudo PORT=' + port + ' chroot launched_images/' + dir_name + '/basefs webserver/tiny.sh'
-        # command = "sudo unshare -p -f --mount-proc=" + base_path + "/proc chroot " + base_path + ' /bin/bash -c "PORT=' + port + ' webserver/tiny.sh"'
+        # command = "sudo chroot " + base_path + ' /bin/bash -c "' + env_command + ' webserver/tiny.sh"'
+        command = "sudo unshare -p -f --mount-proc=" + base_path + "/proc chroot " + base_path + ' /bin/bash -c "' + env_command + ' webserver/tiny.sh"'
 
         # start a new process to support the server
         try:
