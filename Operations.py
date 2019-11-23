@@ -4,6 +4,7 @@ import json
 import shutil
 import time
 from multiprocessing import Process, Queue
+import signal
 
 
 class Operations:
@@ -22,9 +23,9 @@ class Operations:
         # create mount path
         path = "launched_images/" + dir_name + "/basefs" + path
         if not os.path.exists(path):
-            command = "sudo mkdir -p " + path
-            os.system(command)
-            # os.makedirs(path)
+            # command = "sudo mkdir -p " + path
+            # os.system(command)
+            os.makedirs(path)
 
         # Extract the tar file
         dir_path = 'containers/' + dir_name
@@ -50,7 +51,7 @@ class Operations:
         umount_command = "sudo umount " + path
         if dir_name not in self.mounts:
             self.mounts[dir_name] = []
-        self.mounts[dir_name].append(umount_command)
+        self.mounts[dir_name].append([umount_command, path])
 
     def chroot(self, dir_name):
         # get startup command
@@ -65,6 +66,7 @@ class Operations:
         # first command can pass test3, while the second one can pass test4
         # command = "sudo chroot " + base_path + ' /bin/bash -c "' + env_command + ' webserver/tiny.sh"'
         command = "sudo unshare -p -f --mount-proc=" + base_path + "/proc chroot " + base_path + ' /bin/bash -c "' + env_command + ' webserver/tiny.sh"'
+        print(command)
 
         # start a new process to support the server
         try:
@@ -92,7 +94,8 @@ class Operations:
         dir_name = dir_name_part1 + '-' + dir_name_part2 + '-' + dir_name_part3
 
         dir_path = 'containers/' + dir_name
-        os.mkdir(dir_path)
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
 
         # extract base image if not exist
         img_path = "launched_images/" + dir_name
@@ -114,30 +117,31 @@ class Operations:
         # do chroot
         self.chroot(dir_name)
 
+        time.sleep(0.1)
+
         return dir_name
 
     def destroy_instance(self, dir_name):
-        file_name = dir_name + '.cfg'
-        # self.container_num -= 1
 
         # kill server process
-        pid = self.pids[dir_name]
-        command = "sudo kill " + str(pid)
-        os.system(command)
-        del self.pids[dir_name]
+        # pid = self.pids[dir_name]
+        # command = "sudo kill " + str(pid)
+        # os.system(command)
+        # del self.pids[dir_name]
 
         # umount proc
         base_path = 'launched_images/' + dir_name + '/basefs'
         command = "sudo umount " + base_path + '/proc'
         os.system(command)
 
-        # umount mounted folders
-        for umount_command in reversed(self.mounts[dir_name]):
-            os.system(umount_command)
-        del self.mounts[dir_name]
+        # # umount mounted folders
+        # for umount_command in reversed(self.mounts[dir_name]):
+        #     os.system(umount_command[0])
+        #     shutil.rmtree(umount_command[1])
+        # del self.mounts[dir_name]
 
-        # delete container folder
-        shutil.rmtree('containers/' + dir_name)
+        # delete related folder
+        # shutil.rmtree('containers/' + dir_name)
 
 def run_server(command, q):
     q.put(os.getpid())

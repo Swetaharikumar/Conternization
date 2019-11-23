@@ -11,9 +11,10 @@ manager:
 
 clean:
 	sudo /bin/bash ./clean.sh
+	sudo /bin/bash ./clean.sh
 	sudo rm -rf configfiles/
 	sudo rm -rf containers/
-	# sudo rm -rf launched_images/
+	sudo rm -rf launched_images/
 
 cli_tests: sudo clean
 	./grading/cli_tests/test_1_upload.sh
